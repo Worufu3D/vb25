@@ -50,6 +50,9 @@ from vb25.plugins import *
 from vb25.texture import *
 from vb25.nodes   import *
 
+'''Global parameters'''
+e_anim_state=False;
+
 
 VERSION = '2.5'
 
@@ -1768,7 +1771,7 @@ def run(bus):
 
 	if (VRayExporter.autoclose
 		or (VRayExporter.animation and VRayExporter.animation_type == 'FRAMEBYFRAME')
-		or (VRayExporter.animation and VRayExporter.animation_type == 'FULL' and VRayExporter.use_still_motion_blur)):
+		or (VRayExporter.animation and VRayExporter.animation_type == 'FULL' and VRayExporter.use_still_motion_blur and e_anim_state)):
 		params.append('-autoclose=')
 		params.append('1')
 
