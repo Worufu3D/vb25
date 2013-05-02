@@ -50,9 +50,6 @@ from vb25.plugins import *
 from vb25.texture import *
 from vb25.nodes   import *
 
-'''Global parameters'''
-e_anim_state=False;
-
 
 VERSION = '2.5'
 
@@ -1650,7 +1647,7 @@ def write_scene(bus):
 	return False # No errors
 
 
-def run(bus):
+def run(bus,anim=False):
 	scene = bus['scene']
 
 	VRayScene = scene.vray
@@ -1770,8 +1767,8 @@ def run(bus):
 			params= log_window
 
 	if (VRayExporter.autoclose
-		or (VRayExporter.animation and VRayExporter.animation_type == 'FRAMEBYFRAME')
-		or (VRayExporter.animation and VRayExporter.animation_type == 'FULL' and VRayExporter.use_still_motion_blur and e_anim_state)):
+		or (anim and VRayExporter.animation_type == 'FRAMEBYFRAME')
+		or (anim and VRayExporter.use_still_motion_blur and VRayExporter.animation_type == 'FULL')):
 		params.append('-autoclose=')
 		params.append('1')
 
@@ -1936,14 +1933,14 @@ def close_files(bus):
 		bus['files'][key].close()
 
 
-def export_and_run(bus):
+def export_and_run(bus,anim=False):
 	err = write_scene(bus)
 
 	write_settings(bus)
 	close_files(bus)
 
 	if not err:
-		run(bus)
+		run(bus,anim)
 
 
 def init_bus(engine, scene, preview = False):
@@ -2010,7 +2007,11 @@ def render(engine, scene, preview= None):
 				scene.frame_start = f - 1
 				scene.frame_end   = f
 
-				export_and_run(init_bus(engine, scene))
+				#autoclose off on last frame
+				if f==frame_end:
+					export_and_run(init_bus(engine, scene),False)
+				else:
+					export_and_run(init_bus(engine, scene),e_anim_state)
 
 				f += scene.frame_step
 
@@ -2021,7 +2022,7 @@ def render(engine, scene, preview= None):
 			scene.frame_start = scene.frame_current - 1
 			scene.frame_end   = scene.frame_current
 
-			export_and_run(init_bus(engine, scene))
+			export_and_run(init_bus(engine, scene),e_anim_state)
 
 		# Restore settings
 		VRayExporter.animation = e_anim_state
@@ -2037,13 +2038,17 @@ def render(engine, scene, preview= None):
 				f = scene.frame_start
 				while(f <= scene.frame_end):
 					scene.frame_set(f)
-					export_and_run(init_bus(engine, scene))
+					#autoclose off on last frame
+					if f==scene.frame_end:
+						export_and_run(init_bus(engine, scene),False)
+					else:
+						export_and_run(init_bus(engine, scene),e_anim_state)
 					f += scene.frame_step
 
 				scene.frame_set(selected_frame)
 			else:
-				export_and_run(init_bus(engine, scene))
+				export_and_run(init_bus(engine, scene),e_anim_state)
 		else:
-			export_and_run(init_bus(engine, scene))
+			export_and_run(init_bus(engine, scene),e_anim_state)
 
 	return None
