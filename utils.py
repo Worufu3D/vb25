@@ -1123,17 +1123,32 @@ def init_files(bus):
 
 	export_directory = create_dir(export_filepath)
 
-	for key in ('geometry', 'lights', 'materials', 'textures', 'nodes', 'camera', 'scene', 'environment'):
-		if key == 'geometry':
-			filepath = os.path.join(export_directory, "%s_geometry_00.vrscene" % (export_filename))
-		else:
-			if key == 'scene' and VRayDR.on:
-				# Scene file MUST be on top of scene directory
-				filepath = os.path.normpath(os.path.join(export_directory, "..", "%s.vrscene" % (export_filename)))
-			else:
-				filepath = os.path.normpath(os.path.join(export_directory, "%s_%s.vrscene" % (export_filename, key)))
-			bus['files'][key] = open(filepath, 'w')
-		bus['filenames'][key] = filepath
+	inwrite=True
+	try_counter=0;
+	try_limit=5;
+	try_time=2;
+	while inwrite:
+		try:
+			for key in ('geometry', 'lights', 'materials', 'textures', 'nodes', 'camera', 'scene', 'environment'):
+					if key == 'geometry':
+						filepath = os.path.join(export_directory, "%s_geometry_00.vrscene" % (export_filename))
+					else:
+						if key == 'scene' and VRayDR.on:
+							# Scene file MUST be on top of scene directory
+							filepath = os.path.normpath(os.path.join(export_directory, "..", "%s.vrscene" % (export_filename)))
+						else:
+							filepath = os.path.normpath(os.path.join(export_directory, "%s_%s.vrscene" % (export_filename, key)))
+						bus['files'][key] = open(filepath, 'w')
+					bus['filenames'][key] = filepath
+			inwrite=False
+			break
+		except:
+			try_counter+=1
+			print ("Problem while writing exporter files, waiting for file access, try ",try_counter,"...")
+			time.sleep(try_time)
+			if try_counter>=try_limit:
+				inwrite=False
+				print ("ERROR: write tryout limit exceeded, check the permissions to the exported file and folder")
 
 	# Duplicate "Color mapping" setting to a separate file for correct preview
 	#
